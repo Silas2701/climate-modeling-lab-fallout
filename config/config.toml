@@ -1,0 +1,4 @@
+[aerosol]
+bc_mass = 50.0e12 # Black carbon mass in g
+bc_mass_ext_coeff = 9.0 # Black carbon mass extinction coefficient in m^2/kg
+bc_e_folding_time = 5.5 # Black carbon e-folding time in years
