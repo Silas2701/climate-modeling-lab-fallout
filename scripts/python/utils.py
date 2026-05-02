@@ -6,7 +6,7 @@ from typing import Union
 
 import numpy as np
 
-ROOT_DIR: Path = Path(__file__).parents[1]
+ROOT_DIR: Path = Path(__file__).parents[2]
 """The root directory."""
 
 CONFIG_DIR: Path = ROOT_DIR.joinpath("config")

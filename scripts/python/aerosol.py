@@ -149,7 +149,7 @@ def _compute_average_ext_sun(aerosol_data: xr.Dataset, altitude_boundaries: tupl
         float: The average ext_sun value.
     """
     ext_sun = aerosol_data["ext_sun"]
-    ext_sun_bc_layer = ext_sun.sel(altitude=slice(*altitude_boundaries))
+    ext_sun_bc_layer = ext_sun_bc_layer = ext_sun.where((ext_sun["altitude"] >= altitude_boundaries[0]) & (ext_sun["altitude"] < altitude_boundaries[1]), drop=True)
 
     return float(ext_sun_bc_layer.mean(skipna=True))
 
