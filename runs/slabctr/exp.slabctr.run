@@ -146,13 +146,8 @@ cp -fv $run_dir/dict.iconam.mpim dict.txt
 # [files.atmosphere.independent.volcano_aerosols]
 # this is for stratosperic volcanic aerosols, which vary strongly from year to year; we use year 2000 stratospheric volcanic aerosols for all years of the sstclim simulation 
 
-### Move into the root directory of the cloned git repo to execute the modify_aerosol script 
-cd $PROJECTDIR
-
+### Move into the git repo to execute the preprocess script 
 ksh "$PROJECTDIR/scripts/preprocess" --start-year $((y0 - 1)) --end-year $((yN + 1)) --input-data-dir $data_dir --output-data-dir $EXPDIR
-
-# Switch back to EXPDIR
-cd $EXPDIR
 
 # [files.atmosphere.independent.solar_irradiance]
 #solar_irradiance_dir=$data_dir/solar_radiation
