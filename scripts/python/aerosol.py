@@ -95,7 +95,7 @@ def _compute_bc_extinction_coefficient(altitude_levels: list[int], bc_layer_boun
 
     return bc_ext_coeff
 
-def _compute_ext_sun(ext_sun_initial: float, ext_sun_original: np.ndarray, decay_rate: float, x: float) -> float:
+def _compute_ext_sun(ext_sun_initial: float, ext_sun_original: np.ndarray, decay_rate: float, x: float) -> np.ndarray:
     """Compute the extinction coefficient as a function of decay toward a target value.
 
     Args:
@@ -109,7 +109,7 @@ def _compute_ext_sun(ext_sun_initial: float, ext_sun_original: np.ndarray, decay
     """
     return ext_sun_original + (ext_sun_initial - ext_sun_original) * np.exp(-decay_rate * x)
 
-def _compute_omega_sun(omega_sun_initial: float, omega_sun_original: float, decay_rate: float, x: float) -> float:
+def _compute_omega_sun(omega_sun_initial: float, omega_sun_original: float, decay_rate: float, x: float) -> np.ndarray:
     """Compute SSA as a function of decay toward a target value with interpolation between initial and original SSA
 
     Args:
@@ -119,7 +119,7 @@ def _compute_omega_sun(omega_sun_initial: float, omega_sun_original: float, deca
         x (float): Time value to pass to the decay function.
 
     Returns:
-        float: The SSA at the given time.
+        np.ndarray: The SSA at the given time.
     """
     return omega_sun_original * (1 - np.exp(-decay_rate * x)) + omega_sun_initial * np.exp(-decay_rate * x)  
 
@@ -157,7 +157,7 @@ def _modify_data(ds: xr.Dataset, simulation_start_year: int, bc_layer_boundary_i
         x=x
     )
 
-    ext_sun_new = xr.apply_ufunc(lambda x: compute_ext_sun(ext_sun_original=x), ext_sun_original)
+    ext_sun_new = xr.apply_ufunc(lambda original: compute_ext_sun(ext_sun_original=original), ext_sun_original)
 
     # Compute new omega_sun
 
@@ -235,7 +235,7 @@ def modify_aerosols(args: Namespace) -> None:
 
     # Create a modified aerosol file for each simulation file
     for year in range(start_year, end_year + 1):
-        modified_aerosol_data = aerosol_data.copy()
+        modified_aerosol_data = aerosol_data.copy(deep=True)
 
         # Correct months (starting from 1850-01) -> Original month dim uses months from 2000
         modified_aerosol_data["month"] = compute_months_since_1850(year)
