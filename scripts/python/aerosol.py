@@ -109,19 +109,21 @@ def _compute_ext_sun(ext_sun_initial: float, ext_sun_original: np.ndarray, decay
     """
     return ext_sun_original + (ext_sun_initial - ext_sun_original) * np.exp(-decay_rate * x)
 
-def _compute_omega_sun(omega_sun_initial: float, omega_sun_original: float, decay_rate: float, x: float) -> np.ndarray:
+def _compute_omega_sun(omega_sun_original: xr.DataArray, omega_sun_bc: float, ext_sun_original: xr.DataArray, ext_sun_bc: xr.DataArray) -> xr.DataArray:
     """Compute SSA as a function of decay toward a target value with interpolation between initial and original SSA
 
     Args:
-        omega_sun_initial (float): The initial SSA that we want to start with.
-        omega_sun_original (float): The original SSA from the reference dataset.
-        decay_rate_per_year (float): The decay rate.
-        x (float): Time value to pass to the decay function.
+        omega_sun_original (xr.DataArray): The original SSA from the reference dataset.
+        omega_sun_bc (float): The SSA from black carbon.
+        ext_sun_original (xr.DataArray): The original extinction coefficients from the reference dataset.
+        ext_sun_bc (xr.DataArray): The original extinction coefficients computed from black carbon.
 
     Returns:
-        np.ndarray: The SSA at the given time.
+        xr.DataArray: The mixed SSA for the given time.
     """
-    return omega_sun_original * (1 - np.exp(-decay_rate * x)) + omega_sun_initial * np.exp(-decay_rate * x)  
+    ssa = (omega_sun_bc * ext_sun_bc + omega_sun_original * ext_sun_original) / (ext_sun_bc + ext_sun_original)
+
+    return ssa
 
 
 def _modify_data(ds: xr.Dataset, simulation_start_year: int, bc_layer_boundary_indices: tuple[int, int], bc_ext_coeff: float, bc_ssa: float,  bc_decay_rate: float) -> xr.Dataset:
@@ -163,14 +165,14 @@ def _modify_data(ds: xr.Dataset, simulation_start_year: int, bc_layer_boundary_i
 
     # Compute weighted initial SSA weighted by extinction coefficient based on the following formula:
     # ssa = (ssa_smoke*ext_coeff_smoke + ssa_prior*ext_coeff_prior)/(extcoeff_smoke + ext_coeff_prior)
-    omega_sun_initial = (bc_ssa * ext_sun_new + omega_sun_original * ext_sun_original) / (ext_sun_new + ext_sun_original)
-
     compute_omega_sun = partial(
         _compute_omega_sun,
-        decay_rate=bc_decay_rate,
-        x=x
+        omega_sun_original=omega_sun_original,
+        omega_sun_bc=bc_ssa,
+        ext_sun_original=ext_sun_original,
+        ext_sun_bc=ext_sun_new
     )
-    omega_sun_new = xr.apply_ufunc(lambda initial, original: compute_omega_sun(omega_sun_initial=initial, omega_sun_original=original), omega_sun_initial, omega_sun_original)
+    omega_sun_new = xr.apply_ufunc(compute_omega_sun)
 
 
     # Update data variables adn return updated dataset
