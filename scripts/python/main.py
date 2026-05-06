@@ -22,13 +22,6 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    input_dir = Path(args.input_data_dir).resolve()
-    output_dir = Path(args.output_data_dir).resolve()
-
-    if input_dir == output_dir:
-        msg = "The input data dir (-i|--input-data-dir) should be different from the output data dir (-o|--output-data-dir)!"
-        raise ValueError(msg)
-
     modify_aerosols(args)
 
 if __name__ == "__main__":
