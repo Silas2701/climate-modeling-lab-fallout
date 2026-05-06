@@ -1,0 +1,8 @@
+name: climate-modeling-lab
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.11
+  - xarray
+  - netcdf4
+  - numpy

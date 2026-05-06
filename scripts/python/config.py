@@ -23,7 +23,7 @@ class Config:
         self._data = self._load()
 
     def _load(self) -> dict:
-        """Load confg file.
+        """Load config file.
         
         Returns:
             dict: A dictionary with all key-value pairs from the config file.
@@ -69,3 +69,38 @@ class Config:
             str: String representation.
         """
         return f"<Config path={self._path}>\nstr({self._data})"
+    
+    def get_black_carbon_mass(self) -> float:
+        """Get the total black carbon mass.
+
+        Returns:
+            float: The black carbon mass.
+        """    
+        return self["aerosol"]["bc_mass"]
+    
+    def get_black_carbon_mass_extinction_coefficient(self) -> float:
+        """Get the mass extinction coefficient of black carbon.
+
+        Returns:
+            float: The black carbon mass extinction coefficient.
+        """    
+        return self["aerosol"]["bc_mass_ext_coeff"]
+    
+    def get_black_carbon_decay_rate(self) -> float:
+        """Get the decay rate for black carbon.
+
+        Returns:
+            float: The decay rate.
+        """
+        bc_e_folding_time = self["aerosol"]["bc_e_folding_time"]
+        bc_decay_rate = 1 / bc_e_folding_time 
+
+        return bc_decay_rate
+
+    def get_black_carbon_single_scattering_albedo(self) -> float:
+        """Get the single scattering albedo of black carbon.
+
+        Returns:
+            float: The ssa value.
+        """    
+        return self["aerosol"]["bc_ssa"]

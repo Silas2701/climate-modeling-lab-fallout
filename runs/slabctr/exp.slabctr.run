@@ -86,6 +86,7 @@ file_interval="P1Y"
 
 # [files.atmosphere]
 data_dir=/gpfs/data/fs72044/avoigt_teach/msc-climodlab-s2026/mscmet-climmodlab-s2023/ICON-inputdata/amip-VSC4
+modified_data_dir=/gpfs/data/fs72044/icon13/climate-modeling-lab-fallout/modified-data
 
 # [files.atmosphere.mapped]
 grid_dir=$data_dir/grid
@@ -145,9 +146,17 @@ cp -fv $run_dir/dict.iconam.mpim dict.txt
 
 # [files.atmosphere.independent.volcano_aerosols]
 # this is for stratosperic volcanic aerosols, which vary strongly from year to year; we use year 2000 stratospheric volcanic aerosols for all years of the sstclim simulation 
+for((yr = y0 + -1; yr <= yN + 1; ++yr)) 
+do
+    #label=${yr}
+    #    ((yr >= 2015)) && label=2014
+    volcano_aerosols_dir=$modified_data_dir
+    #ln -sfv $volcano_aerosols_dir/bc_aeropt_cmip6_volc_lw_b16_sw_b14_${label}.nc \
+    #    bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
+    ln -sfv $volcano_aerosols_dir/bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}_modified.nc \
+        bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
+done # offsets
 
-### Move into the git repo to execute the preprocess script 
-ksh "$PROJECTDIR/scripts/preprocess" --start-year $((y0 - 1)) --end-year $((yN + 1)) --input-data-dir $data_dir --output-data-dir $EXPDIR
 
 # [files.atmosphere.independent.solar_irradiance]
 #solar_irradiance_dir=$data_dir/solar_radiation
