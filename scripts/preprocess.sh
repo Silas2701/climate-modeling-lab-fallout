@@ -1,12 +1,11 @@
-#! /bin/ksh
+#!/bin/sh
 
 set -e
 
 ENV_NAME="climate-modeling-lab"
-PYTHON_VERSION="3.11"
 
-# ksh-style arrays
-set -A PACKAGES xarray netcdf4 numpy
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 
 # --- required args ---
 START_YEAR=""
@@ -16,6 +15,9 @@ INPUT_DATA_DIR=""
 # --- optional args ---
 OUTPUT_DATA_DIR=""
 CONFIG_FILE=""
+
+# Load miniforge3 module for conda
+module load miniforge3
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -62,22 +64,18 @@ echo "Checking if environment '$ENV_NAME' exists..."
 
 if conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
     echo "Environment exists. Removing..."
-
     conda remove -y -n "$ENV_NAME" --all
 fi
 
 echo "Creating environment..."
-conda create -y -n "$ENV_NAME" python="$PYTHON_VERSION" "${PACKAGES[@]}"
+# shellcheck disable=SC2086
+conda env create -f "$PROJECT_ROOT/environment.yml" -n "$ENV_NAME"
 
 echo "Done! Environment '$ENV_NAME' is ready."
-
 echo "Execute script, modifying input data!"
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
-
 # Build argument list
-set -- python $PROJECT_ROOT/scripts/python/main.py \
+set -- python "$PROJECT_ROOT/scripts/python/main.py" \
     --start-year "$START_YEAR" \
     --end-year "$END_YEAR" \
     --input-data-dir "$INPUT_DATA_DIR"
@@ -95,3 +93,6 @@ conda run -n "$ENV_NAME" "$@"
 
 conda remove -y -n "$ENV_NAME" --all
 echo "Environment '$ENV_NAME' removed again!"
+
+# Unload miniforge3 module for conda
+module unload miniforge3
