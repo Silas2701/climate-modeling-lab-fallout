@@ -107,7 +107,7 @@ def _compute_ext_sun(ext_sun_initial: float, ext_sun_original: np.ndarray, decay
     Returns:
         np.ndarray: The extinction coefficient at the given time.
     """
-    return ext_sun_original + (ext_sun_initial - ext_sun_original) * np.exp(-decay_rate * x)
+    return ext_sun_original + ext_sun_initial * np.exp(-decay_rate * x)
 
 def _compute_omega_sun(omega_sun_original: xr.DataArray, omega_sun_bc: float, ext_sun_original: xr.DataArray, ext_sun_bc: xr.DataArray) -> xr.DataArray:
     """Compute SSA as a function of decay toward a target value with interpolation between initial and original SSA
