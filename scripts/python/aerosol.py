@@ -187,8 +187,8 @@ def _modify_data(ds: xr.Dataset, simulation_start_year: int, bc_layer_boundary_i
 
     altitude_boundaries = map_altitude_boundary_indices_to_values(altitude_levels, (start_idx, end_idx))
 
-    ds["ext_sun"].loc[dict(altitude=slice(*altitude_boundaries))] = ext_sun_new
-    ds["omega_sun"].loc[dict(altitude=slice(*altitude_boundaries))]  = omega_sun_new
+    ds["ext_sun"].loc[dict(altitude=slice(*altitude_boundaries))] = ext_sun_new.values
+    ds["omega_sun"].loc[dict(altitude=slice(*altitude_boundaries))]  = omega_sun_new.values
 
     return ds
 
@@ -240,11 +240,12 @@ def modify_aerosols(args: Namespace) -> None:
         modified_aerosol_data = aerosol_data.copy(deep=True)
 
         # Correct months (starting from 1850-01) -> Original month dim uses months from 2000
-        modified_aerosol_data["month"] = compute_months_since_1850(year)
+        corrected_months = compute_months_since_1850(year)
+        modified_aerosol_data = modified_aerosol_data.assign_coords(month=corrected_months)
 
         # Modify data variables
-        modified_aerosol_data = modified_aerosol_data.groupby("month").apply(modify_data)
-
+        modified_aerosol_data[["ext_sun", "omega_sun"]] = modified_aerosol_data[["ext_sun", "omega_sun"]].groupby("month").map(modify_data)
+        
         # Write out modified data
         output_file_name = AEROSOL_OUTPUT_FILE_NAME_TEMPLATE.format(year)
         output_file = output_data_dir.joinpath(output_file_name)

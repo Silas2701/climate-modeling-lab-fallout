@@ -2,8 +2,6 @@
 
 from datetime import datetime
 from pathlib import Path
-import shutil
-from typing import Union
 
 import numpy as np
 
@@ -85,7 +83,7 @@ def compute_months_since_1850(year: int) -> np.ndarray:
     start_month = months_since_1850 + 1
     end_month = months_since_1850 + MONTHS_PER_YEAR
 
-    months_since_1850_range = np.arange(start_month, end_month + 1)
+    months_since_1850_range = np.arange(start_month, end_month + 1).astype(np.float32)
 
     return months_since_1850_range
 
