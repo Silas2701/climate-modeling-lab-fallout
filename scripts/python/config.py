@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import sys
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 # Python 3.11+ has tomllib in stdlib
 if sys.version_info >= (3, 11):
@@ -69,6 +69,22 @@ class Config:
             str: String representation.
         """
         return f"<Config path={self._path}>\nstr({self._data})"
+    
+    def get_black_carbon_layer_width_in_levels(self) -> int:
+        """Get the width of the black carbon layer in altitude levels.
+
+        Returns:
+            int: The black carbon layer width.
+        """    
+        return int(self["aerosol"]["bc_layer_width_levels"])
+    
+    def get_black_carbon_layer_distribution(self) -> Literal["gaussian", "uniform"]:
+        """Get the value for the distribution type in the black carbon layer.
+
+        Returns:
+            str: Distribution type for the black carbon layer.
+        """    
+        return self["aerosol"]["bc_layer_distribution"]
     
     def get_black_carbon_mass(self) -> float:
         """Get the total black carbon mass.
