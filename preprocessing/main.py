@@ -2,7 +2,6 @@
 
 import argparse
 import os
-from pathlib import Path
 from aerosol import modify_aerosols
 from utils import DEFAULT_CONFIG_FILE
 
