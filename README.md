@@ -42,7 +42,7 @@ For specific configuration setup of our simulation runs have a look at the [âš™ï
 The script can then be invoked in the following way:
 
 ```bash
-./preprocessing/preprocessing.sh --start-year 2000 --end-year 2050  --input-data-dir /gpfs/data/fs72044/avoigt_teach/msc-climodlab-s2026/mscmet-climmodlab-s2023/ICON-inputdata/amip-VSC4  --output-data-dir <output-data-dir>
+bash ./preprocessing/preprocessing.sh --start-year 2000 --end-year 2050  --input-data-dir /gpfs/data/fs72044/avoigt_teach/msc-climodlab-s2026/mscmet-climmodlab-s2023/ICON-inputdata/amip-VSC4  --output-data-dir <output-data-dir>
 ```
 
 Important options:
