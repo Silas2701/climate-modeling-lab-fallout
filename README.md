@@ -87,7 +87,7 @@ Of course you can also change the experiment name and directory etc.. The above 
 Afterwards, it is time to submit the simulation:
 
 ```bash
-sbatch exp.amip.run
+sbatch ./runscripts/exp.amip.run
 ```
 
 We can view information about our jobs using the following command:
