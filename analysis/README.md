@@ -27,24 +27,24 @@ The timeseries script computes a global mean for the selected variable and then 
 Example:
 
 ```bash
-python plot-fallout-global-variable-timeseries.py \
+python plot-global-variable-timeseries.py  \
   --variable toanet \
   --mode 2d \
   --start-date 2000-01-01 \
   --end-year 2035 \
-  --output ./toanet_timeseries.png \
+  --output ./toanet_timeseries.pdf \
   --title "Global mean TOA net radiation"
 ```
 
 Example with two variables:
 
 ```bash
-python plot-fallout-global-variable-timeseries.py \
+python plot-global-variable-timeseries.py \
   --variable tas \
   --variable-2 pr \
   --mode 2d \
   --end-year 2035 \
-  --output ./tas_pr_timeseries.png \
+  --output ./tas_pr_timeseries.pdf \
   --title "Global yearly mean 2m temperature and precipitation"
 ```
 
