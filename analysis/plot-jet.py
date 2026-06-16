@@ -63,7 +63,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="jet_plot.pdf",
+        default="jet_max_time_series.pdf",
         help="Output image path for the jet plot.",
     )
     return parser.parse_args()
