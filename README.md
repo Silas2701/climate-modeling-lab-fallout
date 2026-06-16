@@ -1,10 +1,17 @@
 # 📦 climate-modeling-lab-fallout
 
-This project aims to simulate the effect of a nuclear attack by injecting a substantial amount of Black Carbon (BC) into the lower stratosphere that would result from the combustion of the fires that are ignited after the explosions.
+This project attempts to simulate the consequences of a nuclear conflict by injecting an amount of Black Carbon (BC) into the lower stratosphere. The BC results from the combustion of the fires that are ignited after the explosions.
 
 ------------------------------------------------------------------------
 
 ## 📂 Project Structure
+
+The repository is divided into the following directories:
+
+- **analysis**: scripts for analysing the simulation output and generating plots for the paper.
+- **config**: includes a configuration file for defining characteristics of the black carbon layer and the aerosol modifications. More information in the [⚙️ Configuration](#️-configuration) section.
+- **preprocessing**: python scripts for creating the modified aerosol files.
+- **runscripts**: contains the runscript for submitting and executing the simulation run.
 
 ------------------------------------------------------------------------
 
@@ -12,7 +19,7 @@ This project aims to simulate the effect of a nuclear attack by injecting a subs
 
 ### Prerequisites
 
-In order to run this project you need to have access to the **Vienna Scientific Cluster 4** (VSC4) HPC platform and have a compiled version of the **ICON-ESM**.
+In order to run this project you need to have access to the **Vienna Scientific Cluster 4** (VSC4) HPC platform and an VSC account. Secondly, a compiled version of the **ICON-ESM** must be available.
 
 ### Cloning the repo
 
@@ -125,9 +132,115 @@ bc_ssa = 0.31
 
 ------------------------------------------------------------------------
 
+## 🔄 Postprocessing
+
+To facilitate plotting, we first merge all 2D/3D outputs into a single NetCDF file, using CDO.
+Therefore, move to the directory where the experiment output is written to (it is the directory specified as `EXPDIR` in the runscript) and load the cdo module.
+
+```bash
+cd <EXPDIR> # Move to the EXPDIR 
+module load cdo # Load CDO module
+
+cdo -mergetime slabctr_atm_2d_ml_*.nc slabctr_atm_2d_ml_ALL.nc # For 2D output
+
+cdo -mergetime slabctr_atm_3d_ml_*.nc slabctr_atm_3d_ml_ALL.nc # For 3D output
+```
+
+Furthermore we also require grid remapping from cell-grid to lat-lon-grid which will later then be processed in our plot scripts:
+
+```bash
+cdo remapcon,r360x180 slabctr_atm_2d_ml_ALL.nc slabctr_atm_2d_ml_ALL.r360x180.nc # For 2D output
+
+cdo remapcon,r360x180 slabctr_atm_3d_ml_ALL.nc slabctr_atm_3d_ml_ALL.r360x180.nc # For 2D output
+```
+
+------------------------------------------------------------------------
+
 ## 📊 Plotting
 
-### Postprocessing
+The `./analysis` directory contains two standalone scripts for the fallout model runs `5G2` and `4U10`. Both scripts use a fixed reference dataset, support the derived variable `toanet`, and work with month-length weighted means.
+
+### Requirements
+
+- Python 3.8+ (tested with Python 3.11)
+- Python packages: `xarray`, `numpy`, `pandas`, `matplotlib`
+
+Recommended install in a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install xarray numpy pandas matplotlib cartopy scipy
+```
+
+Or with conda environment manager:
+
+```bash
+module load miniforge3
+conda create -n climate-modeling-lab-fallout python==3.11
+pip install xarray numpy pandas matplotlib cartopy scipy
+```
+
+### Scripts
+
+- **Timeseries script**: `plot-fallout-global-variable-timeseries.py`: plots global mean yearly time series for the reference, `5G2`, and `4U10`, with optional side-by-side plots for a second variable.
+
+### Timeseries script
+
+The `plot-fallout-global-variable-timeseries.py` timeseries script computes a global mean for the selected variable and then aggregates it to yearly means using month-length weighting. It compares the fixed reference, `5G2`, and `4U10`.
+
+Example:
+
+```bash
+python plot-fallout-global-variable-timeseries.py \
+  --variable toanet \
+  --mode 2d \
+  --start-date 2000-01-01 \
+  --end-year 2035 \
+  --output ./toanet_timeseries.pdf \
+  --title "Global mean TOA net radiation"
+```
+
+Example with two variables:
+
+```bash
+python plot-fallout-global-variable-timeseries.py \
+  --variable tas \
+  --variable-2 pr \
+  --mode 2d \
+  --end-year 2035 \
+  --output ./tas_pr_timeseries.pdf \
+  --title "Global yearly mean 2m temperature and precipitation"
+```
+
+Important options:
+
+- `--variable`: variable to plot. `toanet` is a special alias for `rsdt - rsut - rlut`.
+- `--mode`: `2d` or `3d`.
+- `--start-date`: first date to include.
+- `--end-year`: optional final year to include, inclusive.
+- `--variable-2`: optional second variable; when set, the script makes side-by-side panels.
+- `--output`: output file name.
+- `--title`: optional plot title.
+
+#### Averaging and significance
+
+- Monthly data are converted to yearly means with month-length weights so that longer months contribute correctly.
+- For multi-year map plots, the data are averaged over the selected year range with month-length weights.
+
+#### Data expectations
+
+- The scripts expect coordinate names `lat`, `lon`, and `time`. The 3D datasets also use `height`.
+- The run files are mapped internally from the abbreviations `5G2` and `4U10`.
+- The reference file is fixed in the script.
+
+#### Troubleshooting
+
+- If `toanet` is requested, the component variables `rsdt`, `rsut`, and `rlut` must be present.
+- Use `--help` with either script to see the full command line interface.
+
+cdo yearmean -zonmean -expr,'wind_speed=sqrt(ua*ua+va*va); pfull=pfull' -selvar,ua,va,pfull /gpfs/data/fs72044/icon17/anal
+ysis/slabctr_atm_3d_ml_1979-2035_remap.nc slabctr-full-sample.nc
 
 
 ------------------------------------------------------------------------
