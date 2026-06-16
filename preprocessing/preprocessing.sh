@@ -75,7 +75,7 @@ echo "Done! Environment '$ENV_NAME' is ready."
 echo "Execute script, modifying input data!"
 
 # Build argument list
-set -- python "$PROJECT_ROOT/scripts/python/main.py" \
+set -- python "$PROJECT_ROOT/preprocessing/main.py" \
     --start-year "$START_YEAR" \
     --end-year "$END_YEAR" \
     --input-data-dir "$INPUT_DATA_DIR"

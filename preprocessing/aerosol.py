@@ -304,9 +304,13 @@ def modify_aerosols(args: Namespace) -> None:
         # Update aerosol dataset with black carbon layer
         modified_aerosol_data[["ext_sun", "omega_sun"]].loc[{"altitude": bc_layer["altitude"]}] = bc_layer[["ext_sun", "omega_sun"]]
 
+        # Create aerosol output data directory (if it does not exist)
+        aerosol_output_dir = output_data_dir.joinpath(AEROSOL_DIR_NAME)
+        aerosol_output_dir.mkdir(parents=True, exist_ok=True)
+
         # Write out modified data
         output_file_name = AEROSOL_OUTPUT_FILE_NAME_TEMPLATE.format(year)
-        output_file = output_data_dir.joinpath(output_file_name)
+        output_file = aerosol_output_dir.joinpath(output_file_name)
 
         # Unlink if existing output file is a symlink
         if output_file.is_symlink():

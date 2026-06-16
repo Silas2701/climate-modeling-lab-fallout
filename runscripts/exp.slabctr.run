@@ -2,19 +2,16 @@
 #=============================================================================
 #SBATCH --account=p72044
 #SBATCH --partition=skylake_0096
-#SBATCH --qos=skylake_0096
-##SBATCH --qos=skylake_0096_devel
-#SBATCH --job-name=slabctr
-#SBATCH --nodes=6 
-##SBATCH --nodes=1 
+#SBATCH --qos=fast_vsc4
+#SBATCH --job-name=slab-fallout
+#SBATCH --nodes=6
 #SBATCH --ntasks-per-node=48
 #SBATCH --ntasks-per-core=1
-#SBATCH --output=/gpfs/data/fs72044/icon13/climate-modeling-lab-fallout/runs/slabctr/LOG.exp.slabctr.run.%j.o
-#SBATCH --error=/gpfs/data/fs72044/icon13/climate-modeling-lab-fallout/runs/slabctr/LOG.exp.slabctr.run.%j.o
+#SBATCH --output=LOG.exp.slab-fallout.run.%j.o
+#SBATCH --error=LOG.exp.slab-fallout.run.%j.e
 #SBATCH --exclusive
-#SBATCH --time=03:00:00
-##SBATCH --time=00:05:00
-##SBATCH --mail-user=a12548875@univie.ac.at
+#SBATCH --time=02:00:00
+##SBATCH --mail-user=matej.paul@univie.ac.at
 ##SBATCH --mail-type=BEGIN,END,FAIL
 
 set -x # debugging command: enables a mode of the shell where all executed commands are printed to the terminal
@@ -22,7 +19,7 @@ ulimit -s unlimited # unsets limits for RAM
 
 # MPI variables
 # -------------
-no_of_nodes=no_of_nodes=${SLURM_JOB_NUM_NODES:=4} 
+no_of_nodes=no_of_nodes=${SLURM_JOB_NUM_NODES:=4}
 mpi_procs_pernode=48
 ((mpi_total_procs=no_of_nodes * mpi_procs_pernode))
 
@@ -39,16 +36,15 @@ nproma=16
 # Input variables:
 
 # SIMULATION NAME
-EXP=slabctr
+EXP=slab-fallout
 
-ICONFOLDER=/gpfs/data/fs72044/icon13/icon-esm-univie/build.vsc4.intel-intelmpi_spack       # DIRECTORY OF ICON MODEL CODE
-RUNSCRIPTDIR=/gpfs/data/fs72044/icon13/runs/${EXP}
-PROJECTDIR=/gpfs/data/fs72044/icon13/climate-modeling-lab-fallout
+ICONFOLDER=/gpfs/data/fs72044/icon17/icon-esm-univie/build.vsc4.intel-intelmpi_spack     # DIRECTORY OF ICON MODEL CODE
+RUNSCRIPTDIR=$(pwd) # DIRECTORY OF THIS RUNSCRIPT - start run from directory where the runscript is located
 
 . ${ICONFOLDER}/run/add_run_routines
 
 # experiment directory, with plenty of space, create if new
-EXPDIR=/gpfs/data/fs72044/icon13/experiments/s2026/${EXP}
+EXPDIR=/gpfs/data/fs72044/icon17/experiments/${EXP}
 if [ ! -d ${EXPDIR} ] ;  then
   mkdir -p ${EXPDIR}
 fi
@@ -65,18 +61,18 @@ cd $EXPDIR
 
 #-----------------------------------------------------------------------------
 # global timing
-initial_date="1979-01-01"
-final_date="2035-01-01"
+initial_date="2000-01-01"
+final_date="2049-12-01"
 start_date=$initial_date
 end_date=$final_date
 y0=${start_date%%-*}
 yN=${end_date%%-*}
 
 # restart intervals
-restart_interval="P5Y"
+restart_interval="P2Y"
 checkpoint_interval="P1Y"
 
-file_interval="P1Y"
+file_interval="P1M"
 
 #-----------------------------------------------------------------------------
 # Provide input files
@@ -86,7 +82,6 @@ file_interval="P1Y"
 
 # [files.atmosphere]
 data_dir=/gpfs/data/fs72044/avoigt_teach/msc-climodlab-s2026/mscmet-climmodlab-s2023/ICON-inputdata/amip-VSC4
-modified_data_dir=/gpfs/data/fs72044/icon13/climate-modeling-lab-fallout/modified-data
 
 # [files.atmosphere.mapped]
 grid_dir=$data_dir/grid
@@ -97,7 +92,7 @@ initial_dir=$data_dir/initial_condition
 ln -sfv $initial_dir/ifs2icon_1979010100_R02B04_G.nc ifs2icon.nc
 
 # [files.atmosphere.mapped.ozone]
-for((yr = y0 + -1; yr <= yN + 1; ++yr)) 
+for((yr = y0 + -1; yr <= yN + 1; ++yr))
 do
     label=${yr}
         ((yr >= 2015)) && label=2014
@@ -145,18 +140,19 @@ cp -fv $run_dir/dict.iconam.mpim dict.txt
 #    bc_greenhouse_gases.nc
 
 # [files.atmosphere.independent.volcano_aerosols]
-# this is for stratosperic volcanic aerosols, which vary strongly from year to year; we use year 2000 stratospheric volcanic aerosols for all years of the sstclim simulation 
-for((yr = y0 + -1; yr <= yN + 1; ++yr)) 
-do
-    #label=${yr}
-    #    ((yr >= 2015)) && label=2014
-    volcano_aerosols_dir=$modified_data_dir
-    #ln -sfv $volcano_aerosols_dir/bc_aeropt_cmip6_volc_lw_b16_sw_b14_${label}.nc \
-    #    bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
-    ln -sfv $volcano_aerosols_dir/bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}_modified.nc \
-        bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
-done # offsets
+# this is for stratosperic volcanic aerosols, which vary strongly from year to year; we use year 2000 stratospheric volcanic aerosols for all years of the sstclim simulation
+modified_aerosols_dir=$DATA/climate-modeling-lab-fallout/preprocessed-input-data/aerosol
 
+for((yr = y0 + -1; yr <= yN + 1; ++yr))
+do
+    if ((yr < 2000)); then
+        ln -sfv $aerosols_dir/bc_aeropt_cmip6_volc_lw_b16_sw_b14_2000.nc \
+            bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
+    else
+        ln -sfv $modified_aerosols_dir/bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}_modified.nc \
+            bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
+    fi
+done
 
 # [files.atmosphere.independent.solar_irradiance]
 #solar_irradiance_dir=$data_dir/solar_radiation
@@ -210,13 +206,13 @@ fi
 
 cat > icon_master.namelist << EOF
 &master_nml
-    lrestart =  ${restart}
+    lrestart = .true. ! ${restart}
 /
 &master_time_control_nml
     calendar = 'proleptic gregorian'
     checkpointtimeintval = '$checkpoint_interval'
     restarttimeintval = '$restart_interval'
-    experimentstartdate = '1979-01-01' ! TODO: hack to reproduce result
+    experimentstartdate = '2000-01-01' ! TODO: hack to reproduce result
     experimentstopdate = '$final_date'
 /
 &master_model_nml ! 'atmo'
@@ -261,7 +257,7 @@ cat > NAMELIST_atm << EOF
     iforcing = 2 ! 0: none, 1: HS, 2: ECHAM, 3: NWP
     output = 'nml'
     msg_level = 4 ! level of details report during integration
-    restart_filename = 'AMIP-VSC4_restart_atm_<rsttime>.nc'
+    restart_filename = '${EXP}_restart_atm_<rsttime>.nc'
     activate_sync_timers = .true.
 /
 &extpar_nml

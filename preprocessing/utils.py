@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT_DIR: Path = Path(__file__).parents[2]
+ROOT_DIR: Path = Path(__file__).parents[1]
 """The root directory."""
 
 CONFIG_DIR: Path = ROOT_DIR.joinpath("config")
