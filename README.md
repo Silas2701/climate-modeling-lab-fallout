@@ -183,12 +183,12 @@ source .venv/bin/activate
 pip install xarray numpy pandas matplotlib cartopy scipy
 ```
 
-Or with conda environment manager:
+Or with conda environment manager using the `./environment-plotting.yml` file:
 
 ```bash
 module load miniforge3
-conda create -n climate-modeling-lab-fallout python==3.11
-pip install xarray numpy pandas matplotlib cartopy scipy
+conda env create -f environment-plotting.yml
+conda activate climate-modeling-lab-plotting
 ```
 
 ### Global variable time series
@@ -199,7 +199,7 @@ Additionally, the script supports the derived variable `toanet` and works with m
 Example with one variable, e.g. plotting `toanet` time series:
 
 ```bash
-python plot-global-variable-timeseries.py \
+python ./analysis/plot-global-variable-timeseries.py \
   --variable toanet \
   --mode 2d \
   --start-date 2000-01-01 \
@@ -211,7 +211,7 @@ python plot-global-variable-timeseries.py \
 Example with two variables, e.g. plotting `tas` and `pr` time series next to each other:
 
 ```bash
-python plot-global-variable-timeseries.py \
+python ./analysis/plot-global-variable-timeseries.py \
   --variable tas \
   --variable-2 pr \
   --mode 2d \
@@ -249,7 +249,7 @@ cdo yearmean -zonmean -expr,'wind_speed=sqrt(ua*ua+va*va); pfull=pfull' -selvar,
 Example:
 
 ```bash
-python plot-jet.py \
+python ./analysis/plot-jet.py \
   --lat-min 20.0 \
   --lat-max 80.0 \
   --pmin 100.0 \
@@ -271,8 +271,8 @@ The [`plot-ssa-ext.py`](./analysis/plot-ssa-ext.py) script plots the evolvement 
 Example:
 
 ```bash
-python plot-jet.py \
-  --output ./jet_max_time_series.pdf
+python ./analysis/plot-ssa-ext.py \
+  --output ./ssa_and_ext.pdf.pdf
 ```
 
 Important options:
