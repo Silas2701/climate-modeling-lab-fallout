@@ -32,10 +32,17 @@ REFERENCE_FILE = "/gpfs/data/fs72044/icon13/analysis/slabctr_WIND.nc"
 G5_FILE = "/gpfs/data/fs72044/icon13/analysis/slab-fallout-g5-2km_WIND.nc"
 U4_FILE = "/gpfs/data/fs72044/icon13/analysis/slab-fallout-u4-10km_WIND.nc"
 
+DEFAULT_INPUT: str = "default"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compute annual zonal-mean zonal wind (ua) over 20–80° and 100–400 hPa."
+    )
+    parser.add_argument(
+        "--input",
+        type=str,
+        default=DEFAULT_INPUT,
+        help="The input to choose, either default with reference,G5,U4 or custom dataset path.",
     )
     parser.add_argument(
         "--lat-min",
@@ -214,11 +221,16 @@ def load_data(
 def plot_jet_evolution(args: argparse.Namespace) -> None:
     output_path = Path(args.output)
 
-    datasets = [
-        ("reference", REFERENCE_FILE, "tab:blue"),
-        ("5G2", G5_FILE, "tab:orange"),
-        ("4U10", U4_FILE, "tab:green"),
-    ]
+    if args.input == DEFAULT_INPUT:
+        datasets = [
+            ("reference", REFERENCE_FILE, "tab:blue"),
+            ("5G2", G5_FILE, "tab:orange"),
+            ("4U10", U4_FILE, "tab:green"),
+        ]
+    else:
+        datasets = [
+            ("run", args.input, "tab:blue"),
+        ] 
 
     fig, ax_lat = plt.subplots(figsize=(12, 6))
 
