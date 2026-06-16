@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="global_variable_timeseries.png",
+        default="global_variable_timeseries.pdf",
         help="Output image path for the time series plot.",
     )
     parser.add_argument(
@@ -213,7 +213,7 @@ def plot_series(
     display_variable = "net radiation" if variable == "toanet" else variable
     display_variable_2 = "net radiation" if secondary_variable == "toanet" else secondary_variable
     if has_secondary:
-        fig, axes = plt.subplots(1, 2, figsize=(16, 6), sharex=True)
+        fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True)
         ax_primary, ax_secondary = axes
     else:
         fig, ax_primary = plt.subplots(figsize=(12, 6))
@@ -245,17 +245,17 @@ def plot_series(
             secondary_lines.append(line)
 
     if units:
-        ax_primary.set_ylabel(f"{display_variable} ({units})", fontsize=13)
+        ax_primary.set_ylabel(f"{display_variable} ({units})", fontsize=14)
     else:
-        ax_primary.set_ylabel(f"{display_variable}", fontsize=13)
+        ax_primary.set_ylabel(f"{display_variable}", fontsize=14)
 
-    ax_primary.set_title(display_variable, fontsize=14)
-    ax_primary.legend(loc="upper right")
+    ax_primary.set_title(display_variable, fontsize=16)
+    ax_primary.legend(loc="upper right", fontsize=14, frameon=False)
     ax_primary.xaxis.set_major_locator(mdates.YearLocator(5))
     ax_primary.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax_primary.yaxis.set_major_locator(mticker.MaxNLocator(nbins=8))
     ax_primary.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.3g"))
-    ax_primary.tick_params(axis="both", labelsize=11)
+    ax_primary.tick_params(axis="both", labelsize=14)
     ax_primary.spines["bottom"].set_position(("axes", -0.02))
     ax_primary.spines["left"].set_position(("axes", -0.02))
     ax_primary.set_xlim(left=pd.to_datetime(series_list[0][1][series_list[0][1].dims[0]].values[0]))
@@ -264,26 +264,26 @@ def plot_series(
 
     if ax_secondary and secondary_series_list and secondary_variable:
         if secondary_units:
-            ax_secondary.set_ylabel(f"{display_variable_2} ({secondary_units})", fontsize=13)
+            ax_secondary.set_ylabel(f"{display_variable_2} ({secondary_units})", fontsize=14)
         else:
-            ax_secondary.set_ylabel(f"{display_variable_2}", fontsize=13)
-        ax_secondary.set_title(display_variable_2, fontsize=14)
+            ax_secondary.set_ylabel(f"{display_variable_2}", fontsize=14)
+        ax_secondary.set_title(display_variable_2, fontsize=16)
         ax_secondary.xaxis.set_major_locator(mdates.YearLocator(5))
         ax_secondary.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
         ax_secondary.yaxis.set_major_locator(mticker.MaxNLocator(nbins=8))
         ax_secondary.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.3g"))
-        ax_secondary.tick_params(axis="both", labelsize=11)
+        ax_secondary.tick_params(axis="both", labelsize=14)
         ax_secondary.spines["bottom"].set_position(("axes", -0.02))
         ax_secondary.spines["left"].set_position(("axes", -0.02))
         ax_secondary.set_xlim(left=pd.to_datetime(secondary_series_list[0][1][secondary_series_list[0][1].dims[0]].values[0]))
         ax_secondary.spines["top"].set_visible(False)
         ax_secondary.spines["right"].set_visible(False)
 
-    fig.suptitle(title or f"Global yearly mean {variable}" if not has_secondary else (title or "Global yearly means"), fontsize=15)
+    fig.suptitle(title or f"Global yearly mean {variable}" if not has_secondary else (title or "Global yearly means"), fontsize=18)
 
     fig.autofmt_xdate()
     fig.tight_layout(rect=(0, 0, 1, 0.96))
-    fig.savefig(output_path, dpi=150)
+    fig.savefig(output_path, dpi=300)
     plt.close(fig)
 
 

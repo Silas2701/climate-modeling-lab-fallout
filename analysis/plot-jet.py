@@ -28,29 +28,14 @@ import xarray as xr
 
 import matplotlib.pyplot as plt
 
-RUN_FILES = {
-    "5G2": "/gpfs/data/fs72044/icon13/cdo_tests/annual_zonal_mean_g5-2km.nc",
-    "4U10": "/gpfs/data/fs72044/icon13/cdo_tests/annual_zonal_mean_u4-10km.nc"
-}
-
-REFERENCE_FILE = "/gpfs/data/fs72044/icon13/cdo_tests/annual_zonal_mean_slabctr.nc"
+REFERENCE_FILE = "/gpfs/data/fs72044/icon13/analysis/slabctr_WIND.nc"
+G5_FILE = "/gpfs/data/fs72044/icon13/analysis/slab-fallout-g5-2km_WIND.nc"
+U4_FILE = "/gpfs/data/fs72044/icon13/analysis/slab-fallout-u4-10km_WIND.nc"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compute annual zonal-mean zonal wind (ua) over 20–80° and 100–400 hPa."
-    )
-    parser.add_argument(
-        "--run",
-        choices=("5G2", "4U10"),
-        default="5G2",
-        help="Run label to use for the 3D input file.",
-    )
-    parser.add_argument(
-        "--source",
-        choices=("run", "reference"),
-        default="run",
-        help="Use the model run or the reference dataset.",
     )
     parser.add_argument(
         "--lat-min",
@@ -77,8 +62,9 @@ def parse_args() -> argparse.Namespace:
         help="Upper pressure limit in hPa (default: 400).",
     )
     parser.add_argument(
-        "--title",
-        help="Title for the plot.",
+        "--output",
+        default="jet_plot.pdf",
+        help="Output image path for the jet plot.",
     )
     return parser.parse_args()
 
@@ -194,59 +180,39 @@ def compute_annual_max_ws_location(
         coords={"year": years},
     )
 
+def load_data(
+    filename: Path | str,
+    lat_min: float,
+    lat_max: float,
+    pmin_hpa: float,
+    pmax_hpa: float
+) -> None:
+    input_ds = xr.open_dataset(filename)
 
-def main() -> None:
-    args = parse_args()
-
-    if args.source == "run":
-        input_path = RUN_FILES[args.run]
-    else:
-        input_path = REFERENCE_FILE
-
-    print(f"Input file: {input_path}")
-    print(f"Selected latitude band: {args.lat_min:.1f} to {args.lat_max:.1f}°")
-    print(f"Selected pressure band: {args.pmin:.1f} to {args.pmax:.1f} hPa")
-
-    ds = open_dataset("/gpfs/data/fs72044/icon13/cdo_tests/g5-full-FINAL.nc")
-    ds_result = compute_annual_max_ws_location(
-        ds,
-        lat_min=args.lat_min,
-        lat_max=args.lat_max,
-        pmin_hpa=args.pmin,
-        pmax_hpa=args.pmax,
+    result_ds = compute_annual_max_ws_location(
+        input_ds,
+        lat_min=lat_min,
+        lat_max=lat_max,
+        pmin_hpa=pmin_hpa,
+        pmax_hpa=pmax_hpa,
     )
-    
-    output_path = Path(args.output)
-    plot_jet_evolution(ds_result, output_path=output_path)
 
-    if args.output:
-        ds_result.to_netcdf(args.output)
-        print(f"\nSaved annual max-location dataset to: {args.output}")
+    years = pd.to_datetime(result_ds["year"].values, format="%Y")
 
-
-REFERENCE_FILE = "ua_results_slabctr.nc"
-G5_FILE = "ua_results_g5-2km.nc"
-U4_FILE = "ua_results_u4-10km.nc"
-
-
-def load_data(filename):
-    ds = xr.open_dataset(filename)
-
-    years = pd.to_datetime(ds["time"].values)
-
-    lat = ds["lat_of_max"].squeeze()
-    p = ds["pfull_of_max_hPa"].squeeze()
+    lat = result_ds["lat_of_max"].squeeze()
+    p = result_ds["pfull_of_max_hPa"].squeeze()
 
     mask = (years.year >= 2000) & (years.year <= 2035)
 
     years = years[mask]
-    lat = lat.isel(time=mask)
-    p = p.isel(time=mask)
+    lat = lat.isel(year=mask).values
+    p = p.isel(year=mask).values
 
-    return years, lat.values, p.values
+    return years, lat, p
 
 
-def plot_jet_evolution(ds_result: xr.Dataset, output_path: Path) -> None:
+def plot_jet_evolution(args: argparse.Namespace) -> None:
+    output_path = Path(args.output)
 
     datasets = [
         ("reference", REFERENCE_FILE, "tab:blue"),
@@ -254,7 +220,7 @@ def plot_jet_evolution(ds_result: xr.Dataset, output_path: Path) -> None:
         ("4U10", U4_FILE, "tab:green"),
     ]
 
-    fig, ax_lat = plt.subplots(figsize=(10, 5))
+    fig, ax_lat = plt.subplots(figsize=(12, 6))
 
     ax_p = ax_lat.twinx()
 
@@ -271,7 +237,13 @@ def plot_jet_evolution(ds_result: xr.Dataset, output_path: Path) -> None:
 
     for label, filename, color in datasets:
 
-        years, lat, p = load_data(filename)
+        years, lat, p = load_data(
+            filename,
+            lat_min=args.lat_min,
+            lat_max=args.lat_max,
+            pmin_hpa=args.pmin,
+            pmax_hpa=args.pmax
+        )
 
         line_lat, = ax_lat.plot(
             years,
@@ -293,15 +265,16 @@ def plot_jet_evolution(ds_result: xr.Dataset, output_path: Path) -> None:
         legend_labels.append(label)
 
     # Left axis: latitude
-    ax_lat.set_ylabel("Latitude of jet maximum (°N)")
+    ax_lat.set_ylabel("Latitude of jet maximum (°N)", fontsize=14)
     ax_lat.set_ylim(35, 80)
-    ax_p.spines["left"].set_visible(False) #remove
+    ax_lat.tick_params(axis="both", labelsize=14)
+    ax_lat.spines["right"].set_visible(False) #remove
 
     # Right axis: pressure
-    ax_p.set_ylabel("Pressure of jet maximum (hPa)")
+    ax_p.set_ylabel("Pressure of jet maximum (hPa)", fontsize=14)
     ax_p.set_ylim(250, 100)   # inverted
-    ax_p.tick_params(axis="y")
-    ax_lat.spines["right"].set_visible(False) #remove
+    ax_p.tick_params(axis="y", labelsize=14)
+    ax_p.spines["left"].set_visible(False) #remove
 
     # X axis
     ax_lat.set_xlim(
@@ -309,7 +282,6 @@ def plot_jet_evolution(ds_result: xr.Dataset, output_path: Path) -> None:
         pd.Timestamp("2035-12-31"),
     )
 
-    ax_lat.set_xlabel("Year")
     ax_lat.spines["top"].set_visible(False) #remove
     ax_p.spines["top"].set_visible(False) #remove
 
@@ -317,24 +289,32 @@ def plot_jet_evolution(ds_result: xr.Dataset, output_path: Path) -> None:
     plt.xticks(rotation=30)
 
     # Title
-    ax_lat.set_title("Jet maximum latitude and pressure")
+    fig.suptitle("Latitude and pressure of maximum jet wind speed", fontsize=18)
 
     # Legend
     ax_lat.legend(
         legend_lines,
         legend_labels,
         loc="upper right",
+        fontsize=14,
         frameon=False,
     )
 
-    plt.tight_layout()
+    fig.autofmt_xdate()
 
+    plt.tight_layout(rect=(0, 0, 1, 0.96))
     plt.savefig(
         output_path,
         dpi=300,
         bbox_inches="tight",
     )
+    plt.close(fig)
 
+
+def main() -> None:
+    args = parse_args()
+
+    plot_jet_evolution(args)
 
 if __name__ == "__main__":
     main()
